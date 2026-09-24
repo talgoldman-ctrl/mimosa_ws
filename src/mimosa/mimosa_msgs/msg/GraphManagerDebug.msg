@@ -1,0 +1,10 @@
+std_msgs/Header header
+
+geometry_msgs/Vector3 acc_bias
+geometry_msgs/Vector3 gyro_bias
+
+geometry_msgs/Vector3 gravity
+
+float32 diff_against_imu_prior_trans_cm
+float32 diff_against_imu_prior_rot_deg
+float32 diff_against_imu_prior_vel_cm_p_s
