@@ -10,6 +10,7 @@
 #include "mimosa/state.hpp"
 #include "mimosa/stopwatch.hpp"
 #include "mimosa/utils.hpp"
+#include "mimosa_msgs/msg/factor_graph_state.hpp"
 
 // mimosa_msgs
 #include "mimosa_msgs/msg/imu_manager_debug.hpp"
@@ -94,6 +95,7 @@ private:
 
   // Outputs
   rclcpp::Publisher<mimosa_msgs::msg::ImuManagerDebug>::SharedPtr pub_debug_;
+  rclcpp::Publisher<mimosa_msgs::msg::FactorGraphState>::SharedPtr pub_factor_graph_state_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_localizability_marker_array_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odometry_;
 

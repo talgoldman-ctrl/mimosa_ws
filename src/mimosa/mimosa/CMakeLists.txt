@@ -55,7 +55,8 @@ install(DIRECTORY launch/ DESTINATION share/${PROJECT_NAME}/launch
   FILES_MATCHING PATTERN "*.launch.py")
 install(PROGRAMS
   scripts/dataset_evaluation.py scripts/topic_to_file.py
-  scripts/tum_path_publisher.py scripts/batch_process.sh
+  scripts/tum_path_publisher.py scripts/factor_graph_state_report.py
+  scripts/batch_process.sh
   DESTINATION lib/${PROJECT_NAME})
 
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)

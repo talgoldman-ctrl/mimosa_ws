@@ -60,6 +60,52 @@ Available profiles are `enwide`, `euroc`, `hornbill`, `lapwing`, `magpie`,
 `newer_college`, and `parrot`. Input topics can be overridden with
 `imu_topic`, `lidar_topic`, `radar_topic`, and `odometry_topic` launch arguments.
 
+### Pre-optimization debug states
+
+Mimosa publishes the sensor state supplied to the factor graph before GTSAM optimization on:
+
+- `/debug/imu/state`: the IMU-preintegrated initial state for the new graph state.
+- `/debug/lidar/state`: the state at which the LiDAR factors were built and linearized.
+
+Both topics use `mimosa_msgs/msg/FactorGraphState`. The message contains the shared graph-state
+index, pose, velocity, accelerometer bias, gyroscope bias, and full gravity vector in m/s². These
+topics intentionally contain pre-optimization values; use `/mimosa_node/graph/odometry` for the
+optimized state.
+
+Generate an interactive comparison report from a ROS 2 bag containing these topics:
+
+```bash
+python3 src/mimosa/mimosa/scripts/factor_graph_state_report.py /path/to/ros2_bag \
+  --output factor_graph_report.html
+```
+
+When `--output` is omitted, the report is written to `factor_graph_report.html` inside the ROS 2 bag
+directory.
+
+The report reads GPS ground truth from `/sensing/gnss/nav_sat_fix` and converts valid fixes to a
+local WGS84 ENU frame. It contains one figure for each position axis (`x`, `y`, and `z`) with the
+IMU, LiDAR, optimized Mimosa output (`/mimosa_node/graph/odometry`), and GPS traces plus their
+corresponding GPS errors. It also contains one figure for roll, pitch, and yaw with the IMU, LiDAR,
+and optimized output traces plus their differences against IMU, and an aligned 3D trajectory.
+`NavSatFix` has no orientation, so GPS cannot be included in the orientation figures.
+
+By default the script estimates an SE(3) transform from the Mimosa map frame to the GPS ENU frame
+without changing trajectory scale, and applies that same transform to the IMU, LiDAR, and optimized
+Mimosa states.
+Use `--gps-alignment translation` when the frames already have the same axes, or
+`--gps-alignment none` when they are already coincident. Use `--gps-max-time-difference` to control
+GPS timestamp matching, `--gps-topic` to override the GPS topic, `--odometry-topic` to override the
+optimized output topic, `--max-time-difference` to control IMU/LiDAR/output matching, and
+`--plotlyjs cdn` to create a smaller report that loads Plotly from the internet.
+
+The report generator is a standalone Python script and does not use ROS Python libraries or require
+a running ROS environment. It reads ROS 2 SQLite (`.db3`) and MCAP bags directly. NumPy and Plotly
+are required; the pure-Python `mcap` package is additionally required only for MCAP input:
+
+```bash
+python3 -m pip install numpy plotly mcap
+```
+
 ### Examples
 
 #### LiDAR-Radar-IMU Fusion

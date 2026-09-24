@@ -20,6 +20,8 @@ Manager::Manager(rclcpp::Node & pnh)
 
   // Publishers
   pub_debug_ = pnh.create_publisher<mimosa_msgs::msg::ImuManagerDebug>("imu/manager/debug", 1);
+  pub_factor_graph_state_ =
+    pnh.create_publisher<mimosa_msgs::msg::FactorGraphState>("/debug/imu/state", 10);
   pub_localizability_marker_array_ =
     pnh.create_publisher<visualization_msgs::msg::MarkerArray>("imu/manager/localizability_marker_array", 1);
   pub_odometry_ = pnh.create_publisher<nav_msgs::msg::Odometry>("imu/manager/odometry", 1);
@@ -458,6 +460,21 @@ void Manager::addImuFactorAndGetNavState(
     ns_1 = preintegrator_->predict(state_0.navState(), state_0.imuBias(), state_0.gravity());
     logger_->trace("predicted state");
   }
+
+  // Publish the initial state that the IMU contributes to the graph. This is deliberately
+  // emitted before the factor is handed to the smoother, so it never contains an optimized state.
+  mimosa_msgs::msg::FactorGraphState factor_graph_state;
+  factor_graph_state.header.stamp = toStamp(ts_1);
+  factor_graph_state.header.frame_id = config_.map_frame;
+  factor_graph_state.state_index = key_1;
+  convert(ns_1.pose(), factor_graph_state.pose);
+  convert(ns_1.velocity(), factor_graph_state.velocity);
+  convert(state_0.imuBias().accelerometer(), factor_graph_state.accelerometer_bias);
+  convert(state_0.imuBias().gyroscope(), factor_graph_state.gyroscope_bias);
+  convert(
+    state_0.gravity().unitVector() * config_.preintegration.gravity_magnitude,
+    factor_graph_state.gravity);
+  pub_factor_graph_state_->publish(factor_graph_state);
 
   gtsam::Values values;
   values.insert(X(state_0.key()), state_0.navState().pose());
