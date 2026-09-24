@@ -163,23 +163,26 @@ void Geometric::preprocess(
   Be_cloud_->width = Be_cloud_->size();
   Be_cloud_->height = 1;
 
-  if (pub_sm_cloud_->get_subscription_count()) {
-    publishCloud(pub_sm_cloud_, *Be_cloud_, config.body_frame, ts_);
-  }
-
   downsample(
     *Be_cloud_, sm_Be_cloud_ds_, config.scan_to_map.source_voxel_grid_filter_leaf_size, 20,
     config.scan_to_map.source_voxel_grid_min_dist_in_voxel);
-
-  if (pub_sm_cloud_ds_->get_subscription_count()) {
-    publishCloud(pub_sm_cloud_ds_, sm_Be_cloud_ds_, config.body_frame, ts_);
-  }
 
   debug_msg_.n_points_in = points_deskewed.size();
   debug_msg_.n_points_in_sm_ds = sm_Be_cloud_ds_.size();
 
   logger_->trace("Preprocess end");
   debug_msg_.t_preprocess = sw.elapsedMs();
+}
+
+void Geometric::publishClouds()
+{
+  if (pub_sm_cloud_->get_subscription_count()) {
+    publishCloud(pub_sm_cloud_, *Be_cloud_, config.body_frame, ts_);
+  }
+
+  if (pub_sm_cloud_ds_->get_subscription_count()) {
+    publishCloud(pub_sm_cloud_ds_, sm_Be_cloud_ds_, config.body_frame, ts_);
+  }
 }
 
 void Geometric::getFactors(

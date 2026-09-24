@@ -60,6 +60,7 @@ struct ManagerConfig
   float interpolation_max_ts_diff = 0.01;  // s
   float extrapolation_max_ts_diff = 0.01;  // s
   float acc_scale_factor = 1.0;            // used only when IMU measurements are in units of g
+  float max_acceleration_magnitude = 0.0;  // m/s^2; zero disables the limit
 
   PreintegrationConfig preintegration;
 };

@@ -90,7 +90,8 @@ private:
     const gtsam::NonlinearFactorGraph & new_factors, gtsam::Values & optimized_values,
     const graph::Manager::DeclarationResult result);
   void postDefineUpdate(const gtsam::Key key, const gtsam::Values & values);
-  void publishResults(const gtsam::Pose3 & T_W_Bk_opt);
+  void publishResults(
+    const gtsam::Pose3 & T_W_Bk_opt, const gtsam::Pose3 & T_W_B_cloud);
   inline double globalTs(const uint32_t & value) const { return header_ts_ + value * 1.0e-9; }
 };
 

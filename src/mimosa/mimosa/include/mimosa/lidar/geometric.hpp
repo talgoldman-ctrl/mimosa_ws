@@ -85,6 +85,7 @@ public:
     const gtsam::Key & key, const gtsam::Values & values, gtsam::NonlinearFactorGraph & graph,
     M66 & eigenvectors_block_matrix, V6D & degen_directions);
   void updateMap(const gtsam::Key key, const gtsam::Values & values);
+  void publishClouds();
   void publishDebug();
 };
 }  // namespace lidar

@@ -138,6 +138,10 @@ public:
     std::lock_guard<std::mutex> lock(graph_mutex_);
     return optimized_values_;
   }
+  inline void broadcastMapToBodyTransform(const gtsam::Pose3 & T_W_B, const double ts)
+  {
+    broadcastTransform(tf2_broadcaster_, T_W_B, config_.map_frame, config_.body_frame, ts);
+  }
   inline const gtsam::NonlinearFactorGraph & getFactors() const
   {
 #if SMOOTHER_IFL

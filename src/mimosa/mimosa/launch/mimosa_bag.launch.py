@@ -16,6 +16,7 @@ def generate_launch_description():
         launch_arguments={
             "profile": LaunchConfiguration("profile"),
             "viz": LaunchConfiguration("viz"),
+            "rviz_gpu": LaunchConfiguration("rviz_gpu"),
             "use_sim_time": "true",
             "config_override": LaunchConfiguration("config_override"),
         }.items(),
@@ -30,6 +31,7 @@ def generate_launch_description():
         DeclareLaunchArgument("bag_name"),
         DeclareLaunchArgument("start_offset", default_value="0"),
         DeclareLaunchArgument("viz", default_value="false"),
+        DeclareLaunchArgument("rviz_gpu", default_value="true"),
         DeclareLaunchArgument("config_override", default_value=""),
         core, TimerAction(period=2.0, actions=[play]),
     ])

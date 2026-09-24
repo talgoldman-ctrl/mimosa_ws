@@ -74,10 +74,6 @@ void Manager::callback(const sensor_msgs::msg::Imu::ConstSharedPtr msg)
   }
   prev_ts = ts;
 
-  if (!has_recieved_first_message_) {
-    has_recieved_first_message_ = true;
-  }
-
   V6D imu_meas;
   imu_meas << msg->linear_acceleration.x, msg->linear_acceleration.y, msg->linear_acceleration.z,
     msg->angular_velocity.x, msg->angular_velocity.y, msg->angular_velocity.z;
@@ -86,6 +82,20 @@ void Manager::callback(const sensor_msgs::msg::Imu::ConstSharedPtr msg)
     // This scale factor is typically to account for the fact that the accelerometer values
     // are in units of g instead of m/s^2
     imu_meas.head<3>() *= config_.acc_scale_factor;
+  }
+
+  const auto acceleration = imu_meas.head<3>();
+  if (!acceleration.allFinite() ||
+      (config_.max_acceleration_magnitude > 0.0 &&
+       acceleration.norm() > config_.max_acceleration_magnitude)) {
+    logger_->warn(
+      "Dropping IMU message with non-physical acceleration [{}, {}, {}] m/s^2",
+      acceleration.x(), acceleration.y(), acceleration.z());
+    return;
+  }
+
+  if (!has_recieved_first_message_) {
+    has_recieved_first_message_ = true;
   }
 
   // Add to buffer
@@ -540,6 +550,7 @@ void declare_config(ManagerConfig & config)
       field(config.interpolation_max_ts_diff, "interpolation_max_ts_diff", "s");
       field(config.extrapolation_max_ts_diff, "extrapolation_max_ts_diff", "s");
       field(config.acc_scale_factor, "acc_scale_factor");
+      field(config.max_acceleration_magnitude, "max_acceleration_magnitude", "m/s^2");
     }
     field(config.preintegration, "preintegration");
   }
@@ -549,6 +560,7 @@ void declare_config(ManagerConfig & config)
   check(config.extrapolation_max_ts_diff, GT, 0.005, "extrapolation_max_ts_diff");
   check(config.acc_scale_factor, GE, 1.0, "acc_scale_factor");
   check(config.acc_scale_factor, LT, 10.0, "acc_scale_factor");
+  check(config.max_acceleration_magnitude, GE, 0.0, "max_acceleration_magnitude");
 }
 
 }  // namespace imu

@@ -99,6 +99,12 @@ void Manager::callback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
   debug_msg_.t_declare = sw_declare.elapsedMs();
   logger_->debug("Declaration done for ts: {} assigned key: {}", corrected_ts_, gdkf(new_key_));
 
+  static bool first = true;
+  if (first) {
+    // Make the body-to-lidar link available before any lidar output is published.
+    broadcastStaticTransform(corrected_ts_);
+  }
+
   if (imu_preintegrator_ == nullptr) {
     imu_preintegrator_ =
       std::make_unique<gtsam::PreintegratedImuMeasurements>(imu_manager_->getPreintegratorParams());
@@ -108,12 +114,10 @@ void Manager::callback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 
   preprocess(X(new_key_));
 
-  static bool first = true;
   gtsam::Pose3 T_W_Bk_opt;
   static gtsam::Values opt_values = graph_manager_->getCurrentOptimizedValues();
   if (first) {
     first = false;
-    broadcastStaticTransform(corrected_ts_);
 
     initialized_ = true;
     debug_msg_.initialized = initialized_;
@@ -140,7 +144,12 @@ void Manager::callback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 
   postDefineUpdate(X(new_key_), opt_values);
 
-  publishResults(T_W_Bk_opt);
+  // A reused graph key retains the older optimized pose timestamp. The cloud, however, is
+  // deskewed into the scan-end frame, so use the propagated scan-end pose for its TF sample.
+  const gtsam::Pose3 T_W_B_cloud =
+    dr == graph::Manager::DeclarationResult::SUCCESS_SAME_KEY ? propagated_state_.pose()
+                                                              : T_W_Bk_opt;
+  publishResults(T_W_Bk_opt, T_W_B_cloud);
 
   debug_msg_.header.stamp = toStamp(corrected_ts_);
   debug_msg_.t_full = sw.elapsedMs();
@@ -590,10 +599,18 @@ void Manager::postDefineUpdate(const gtsam::Key key, const gtsam::Values & value
   debug_msg_.t_post_define_update = sw.elapsedMs();
 }
 
-void Manager::publishResults(const gtsam::Pose3 & T_W_Bk_opt)
+void Manager::publishResults(
+  const gtsam::Pose3 & T_W_Bk_opt, const gtsam::Pose3 & T_W_B_cloud)
 {
   Stopwatch sw;
   logger_->debug("Publishing results");
+
+  // Publish an exact transform sample before clouds bearing corrected_ts_. This is required for
+  // scans that were collapsed into an existing graph key, for which graph::Manager intentionally
+  // does not publish a new transform.
+  graph_manager_->broadcastMapToBodyTransform(T_W_B_cloud, corrected_ts_);
+
+  geometric_->publishClouds();
 
   static int counter = 0;
   if (counter % config_.full_res_pointcloud_publish_rate_divisor == 0) {

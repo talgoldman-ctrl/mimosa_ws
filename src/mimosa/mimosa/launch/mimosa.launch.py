@@ -80,6 +80,9 @@ def _launch(context):
     rviz_env = {}
     if LaunchConfiguration("rviz_gpu").perform(context).lower() == "true":
         rviz_env = {
+            "QT_OPENGL": "desktop",
+            "LIBGL_ALWAYS_SOFTWARE": "0",
+            "DRI_PRIME": "1",
             "__NV_PRIME_RENDER_OFFLOAD": "1",
             "__GLX_VENDOR_LIBRARY_NAME": "nvidia",
             "__VK_LAYER_NV_optimus": "NVIDIA_only",
@@ -104,7 +107,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument("profile", default_value="hornbill"),
         DeclareLaunchArgument("viz", default_value="false"),
-        DeclareLaunchArgument("rviz_gpu", default_value="false"),
+        DeclareLaunchArgument("rviz_gpu", default_value="true"),
         DeclareLaunchArgument("use_sim_time", default_value="false"),
         DeclareLaunchArgument("config_override", default_value=""),
         DeclareLaunchArgument("imu_topic", default_value=""),
